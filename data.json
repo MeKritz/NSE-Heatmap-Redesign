@@ -1,0 +1,24 @@
+{
+  "asOn": "15-Oct-2026 13:28:54 IST",
+  "note": "Sample snapshot copied from the NSE heatmap page (Broad Market Indices). Not live data.",
+  "indices": [
+    {"name": "NIFTY 50", "value": 23027.70, "change": 1.79},
+    {"name": "NIFTY NEXT 50", "value": 68746.10, "change": -0.37},
+    {"name": "NIFTY MIDCAP 50", "value": 17035.25, "change": 0.22},
+    {"name": "NIFTY MIDCAP 100", "value": 59406.20, "change": null},
+    {"name": "NIFTY MIDCAP 150", "value": 21819.20, "change": -0.01},
+    {"name": "NIFTY SMLCAP 50", "value": 9577.45, "change": -1.05},
+    {"name": "NIFTY SMLCAP 100", "value": 19161.10, "change": -1.15},
+    {"name": "NIFTY SMLCAP 250", "value": 17659.80, "change": -0.97},
+    {"name": "NIFTY MIDSML 400", "value": 20329.35, "change": -0.35},
+    {"name": "NIFTY 100", "value": 24015.25, "change": 1.38},
+    {"name": "NIFTY 200", "value": 13297.55, "change": 1.10},
+    {"name": "NIFTY500 MULTICAP", "value": 15803.90, "change": 0.44},
+    {"name": "NIFTY LARGEMID 250", "value": 15833.65, "change": 0.69},
+    {"name": "NIFTY MID SELECT", "value": 13805.10, "change": 0.23},
+    {"name": "NIFTY TOTAL MARKET", "value": 12570.55, "change": 0.71},
+    {"name": "NIFTY MICROCAP 250", "value": 25610.50, "change": -1.44},
+    {"name": "NIFTY 500", "value": 22217.15, "change": 0.81},
+    {"name": "NIFTY FPI 150", "value": 1484.85, "change": 1.20}
+  ]
+}

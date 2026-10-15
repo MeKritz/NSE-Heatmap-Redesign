@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Heatmap - NSE Index Heatmap Redesign</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <header class="bg-indigo-900 text-white p-5">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-2xl font-bold">Clear Heatmap</h1>
+      <p class="text-indigo-200 mt-1">A redesigned view of the NSE Broad Market Indices heatmap</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-4 md:p-8">
+
+    <section class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="grid gap-4 md:grid-cols-3">
+        <div>
+          <label for="search" class="block font-medium mb-2">Search index</label>
+          <input id="search" type="text" maxlength="40" placeholder="e.g. smlcap, 500"
+            class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+        </div>
+        <div>
+          <label for="sort" class="block font-medium mb-2">Sort by</label>
+          <select id="sort" class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            <option value="default">Original order</option>
+            <option value="best">Best performing first</option>
+            <option value="worst">Worst performing first</option>
+            <option value="name">Name (A to Z)</option>
+          </select>
+        </div>
+        <div>
+          <span class="block font-medium mb-2">Show</span>
+          <div class="flex gap-2" id="filters">
+            <button type="button" data-filter="all" class="filter-btn border rounded-lg px-4 py-3 flex-1">All</button>
+            <button type="button" data-filter="up" class="filter-btn border rounded-lg px-4 py-3 flex-1">Gainers</button>
+            <button type="button" data-filter="down" class="filter-btn border rounded-lg px-4 py-3 flex-1">Losers</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap gap-2 text-xs font-semibold text-white" aria-label="Colour legend">
+          <span class="px-3 py-1 rounded-full bg-green-800">&#9650; 3% or more</span>
+          <span class="px-3 py-1 rounded-full bg-green-600">&#9650; 1% to 3%</span>
+          <span class="px-3 py-1 rounded-full bg-green-500">&#9650; 0% to 1%</span>
+          <span class="px-3 py-1 rounded-full bg-slate-500">No change / no data</span>
+          <span class="px-3 py-1 rounded-full bg-red-400">&#9660; 0% to -1%</span>
+          <span class="px-3 py-1 rounded-full bg-red-600">&#9660; -1% to -3%</span>
+          <span class="px-3 py-1 rounded-full bg-red-800">&#9660; -3% or less</span>
+        </div>
+        <button type="button" id="viewBtn" class="border rounded-lg px-4 py-2 hover:bg-slate-100">Switch to table view</button>
+      </div>
+
+      <p id="status" role="status" aria-live="polite" class="mt-4 text-sm text-slate-600">Loading data...</p>
+    </section>
+
+    <section class="mt-6">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-xl font-bold">Broad Market Indices</h2>
+        <span id="count" class="text-sm text-slate-500"></span>
+      </div>
+      <div id="heatmap" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"></div>
+      <div id="table" class="hidden overflow-x-auto bg-white rounded-xl border"></div>
+    </section>
+
+    <p id="asOn" class="text-sm text-slate-500 mt-6"></p>
+    <p class="text-xs text-slate-400 mt-1">Student prototype. Sample data copied from the NSE India heatmap page. Not for trading decisions.</p>
+  </main>
+
+<script>
+  // Embedded copy used only if data.json cannot be fetched (for example when opening the file by double-click)
+  const FALLBACK_DATA = {"asOn": "15-Oct-2026 13:28:54 IST", "note": "Sample snapshot copied from the NSE heatmap page (Broad Market Indices). Not live data.", "indices": [{"name": "NIFTY 50", "value": 23027.7, "change": 1.79}, {"name": "NIFTY NEXT 50", "value": 68746.1, "change": -0.37}, {"name": "NIFTY MIDCAP 50", "value": 17035.25, "change": 0.22}, {"name": "NIFTY MIDCAP 100", "value": 59406.2, "change": null}, {"name": "NIFTY MIDCAP 150", "value": 21819.2, "change": -0.01}, {"name": "NIFTY SMLCAP 50", "value": 9577.45, "change": -1.05}, {"name": "NIFTY SMLCAP 100", "value": 19161.1, "change": -1.15}, {"name": "NIFTY SMLCAP 250", "value": 17659.8, "change": -0.97}, {"name": "NIFTY MIDSML 400", "value": 20329.35, "change": -0.35}, {"name": "NIFTY 100", "value": 24015.25, "change": 1.38}, {"name": "NIFTY 200", "value": 13297.55, "change": 1.1}, {"name": "NIFTY500 MULTICAP", "value": 15803.9, "change": 0.44}, {"name": "NIFTY LARGEMID 250", "value": 15833.65, "change": 0.69}, {"name": "NIFTY MID SELECT", "value": 13805.1, "change": 0.23}, {"name": "NIFTY TOTAL MARKET", "value": 12570.55, "change": 0.71}, {"name": "NIFTY MICROCAP 250", "value": 25610.5, "change": -1.44}, {"name": "NIFTY 500", "value": 22217.15, "change": 0.81}, {"name": "NIFTY FPI 150", "value": 1484.85, "change": 1.2}]};
+
+  const searchBox = document.getElementById("search");
+  const sortBox = document.getElementById("sort");
+  const filters = document.getElementById("filters");
+  const viewBtn = document.getElementById("viewBtn");
+  const heatmap = document.getElementById("heatmap");
+  const table = document.getElementById("table");
+  const statusText = document.getElementById("status");
+  const count = document.getElementById("count");
+
+  let indices = [];
+  let activeFilter = "all";
+  let tableView = false;
+
+  // Colour bands follow the NSE legend (5, 3, 1, 0, -1, -3, -5) but each band also has a text arrow
+  function band(change) {
+    if (change === null) return { bg: "bg-slate-500", arrow: "", label: "No data" };
+    if (change >= 3)  return { bg: "bg-green-800", arrow: "\u25B2", label: "Strong gain" };
+    if (change >= 1)  return { bg: "bg-green-600", arrow: "\u25B2", label: "Gain" };
+    if (change > 0)   return { bg: "bg-green-500", arrow: "\u25B2", label: "Small gain" };
+    if (change === 0) return { bg: "bg-slate-500", arrow: "", label: "No change" };
+    if (change > -1)  return { bg: "bg-red-400",   arrow: "\u25BC", label: "Small loss" };
+    if (change > -3)  return { bg: "bg-red-600",   arrow: "\u25BC", label: "Loss" };
+    return { bg: "bg-red-800", arrow: "\u25BC", label: "Strong loss" };
+  }
+
+  function fmt(change) {
+    return change === null ? "No data" : (change > 0 ? "+" : "") + change.toFixed(2) + "%";
+  }
+
+  // Fetch API + JSON, with loading and error states
+  async function loadData() {
+    statusText.textContent = "Loading data...";
+    try {
+      const response = await fetch("data.json");
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const data = await response.json();
+      setData(data, "Data loaded from data.json.");
+    } catch (error) {
+      console.error(error);
+      setData(FALLBACK_DATA, "Could not fetch data.json, so the built-in sample copy is shown.");
+    }
+  }
+
+  function setData(data, message) {
+    indices = data.indices;
+    document.getElementById("asOn").textContent = "Snapshot taken: " + data.asOn + ". " + data.note;
+    statusText.textContent = message;
+    render();
+  }
+
+  function getVisible() {
+    const q = searchBox.value.trim().toLowerCase();
+    let list = indices.filter(function (i) {
+      const matchName = i.name.toLowerCase().includes(q);
+      const matchFilter =
+        activeFilter === "all" ||
+        (activeFilter === "up" && i.change !== null && i.change > 0) ||
+        (activeFilter === "down" && i.change !== null && i.change < 0);
+      return matchName && matchFilter;
+    });
+    const s = sortBox.value;
+    if (s === "best") list.sort(function (a, b) { return (b.change ?? -99) - (a.change ?? -99); });
+    if (s === "worst") list.sort(function (a, b) { return (a.change ?? 99) - (b.change ?? 99); });
+    if (s === "name") list.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    return list;
+  }
+
+  function render() {
+    const list = getVisible();
+    heatmap.innerHTML = "";
+    table.innerHTML = "";
+    count.textContent = list.length + " of " + indices.length + " indices";
+
+    // Empty state
+    if (list.length === 0) {
+      heatmap.innerHTML = '<p class="col-span-full bg-white border rounded-xl p-5 text-slate-600">No index matches your search. Clear the search box or choose "All".</p>';
+      return;
+    }
+
+    list.forEach(function (i) {
+      const b = band(i.change);
+      const tile = document.createElement("div");
+      tile.className = "rounded-lg p-3 text-white min-h-[110px] flex flex-col justify-between " + b.bg;
+
+      const name = document.createElement("p");
+      name.className = "font-bold text-sm break-words"; // full name, never cut off
+      name.textContent = i.name;
+
+      const value = document.createElement("p");
+      value.className = "text-sm";
+      value.textContent = i.value.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+
+      const change = document.createElement("p");
+      change.className = "text-base font-bold";
+      change.textContent = b.arrow + " " + fmt(i.change);
+
+      tile.title = i.name + ": " + b.label;
+      tile.append(name, value, change);
+      heatmap.appendChild(tile);
+    });
+
+    // Table view
+    let rows = list.map(function (i) {
+      const b = band(i.change);
+      const colour = i.change === null ? "text-slate-500" : (i.change < 0 ? "text-red-700" : "text-green-700");
+      return '<tr class="border-t"><td class="p-3 font-medium">' + i.name + '</td><td class="p-3">' +
+        i.value.toLocaleString("en-IN", { minimumFractionDigits: 2 }) + '</td><td class="p-3 font-semibold ' +
+        colour + '">' + b.arrow + " " + fmt(i.change) + '</td><td class="p-3">' + b.label + '</td></tr>';
+    }).join("");
+    table.innerHTML = '<table class="w-full text-left text-sm"><thead class="bg-slate-100"><tr><th class="p-3">Index</th><th class="p-3">Value</th><th class="p-3">Change</th><th class="p-3">Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function updateFilterButtons() {
+    filters.querySelectorAll("button").forEach(function (btn) {
+      const on = btn.dataset.filter === activeFilter;
+      btn.className = "filter-btn rounded-lg px-4 py-3 flex-1 border " +
+        (on ? "bg-indigo-800 text-white border-indigo-800" : "hover:bg-slate-100");
+    });
+  }
+
+  // EVENT 1: "input" - live search as the user types
+  searchBox.addEventListener("input", function () {
+    statusText.textContent = searchBox.value.trim() ? 'Searching for "' + searchBox.value.trim() + '".' : "Showing all indices.";
+    render();
+  });
+
+  // EVENT 2: "change" - sort the tiles
+  sortBox.addEventListener("change", function () {
+    statusText.textContent = "Sorted: " + sortBox.options[sortBox.selectedIndex].text + ".";
+    render();
+  });
+
+  // EVENT 3: "click" - filter buttons (gainers / losers / all)
+  filters.addEventListener("click", function (event) {
+    const btn = event.target.closest("button");
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    updateFilterButtons();
+    statusText.textContent = "Filter applied: " + btn.textContent + ".";
+    render();
+  });
+
+  // EVENT 4: "click" - switch between heatmap and table
+  viewBtn.addEventListener("click", function () {
+    tableView = !tableView;
+    heatmap.classList.toggle("hidden", tableView);
+    table.classList.toggle("hidden", !tableView);
+    viewBtn.textContent = tableView ? "Switch to heatmap view" : "Switch to table view";
+  });
+
+  updateFilterButtons();
+  loadData();
+</script>
+</body>
+</html>
